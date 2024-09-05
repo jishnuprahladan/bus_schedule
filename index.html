@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Schedule UI</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="schedule">
+        <div class="header">
+            <div class="column destination">Scheduled
+                <span class="headsubtext">Programada</span>
+            </div>
+            <div class="column destination">Destination<span class="headsubtext">Destino</span></div>
+            <div class="column destination">Estimated<span class="headsubtext">Estimada</span></div>
+            <div class="column destination">Gate<span class="headsubtext">Pureta</span></div>
+        </div>
+        <div id="schedule-body">
+        </div>
+    </div>
+
+    <script>
+        const apiTripUrl = 'https://mpmgtfs.messagepoint.tv:3048/v1/flixbus/magellan?stationId=925e377a-a621-4652-b639-fea7e2c81613&trip_type=departure&startTime=2024-09-01%2010:46:02&endTime=2024-09-02%2014:46:02';
+
+      
+
+        async function fetchBusSchedule() {
+            try {
+                const response = await fetch(apiTripUrl);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log(data);
+                const scheduleBody = document.getElementById('schedule-body');
+                scheduleBody.innerHTML = ''; 
+
+               
+                console.log(`Stop Name: ${data.stop.Name}`);
+                data.stop.RouteDetail.Trip.forEach(trip => {
+                
+                    const edtTimestamp = parseInt(trip.EDT.match(/\d+/)[0]);
+                    const etaTimestamp = parseInt(trip.ETA.match(/\d+/)[0]);
+                    const edtDate = new Date(edtTimestamp);
+                    const etaDate = new Date(etaTimestamp);
+                    const timeOptions = { hour: '2-digit', minute: '2-digit', hour12: true };
+                    const edtFormatted = edtDate.toLocaleTimeString('en-US', timeOptions);
+                    const etaFormatted = etaDate.toLocaleTimeString('en-US', timeOptions);
+          
+                    const row = document.createElement('div');
+                    row.className = 'row';
+
+                   
+                    row.innerHTML = `
+                        <div class="column">${edtFormatted}
+                            <img src="logo-flixbus.png" alt="Bus Icon" class="icon"> 
+                           <div  class="no"> ${trip.TripId}</div>
+                        </div>
+                        <div class="column destination">
+                             <span class="city">${trip.des}</span>
+                         <div class="subtext-wrapper">
+                                 <span class="subtext">Also serving ${trip.serving.join(', ')}</span>
+                                 </div>
+                        </div>
+                        <div class="column">${etaFormatted}</div>
+                        <div class="column">${trip.gate || '1'}</div>
+                    `;
+                    scheduleBody.appendChild(row);
+                });
+
+            } catch (error) {
+                console.error('Error fetching the bus schedule:', error);
+            }
+        }
+
+        fetchBusSchedule();
+
+    </script>
+</body>
+
+</html>
